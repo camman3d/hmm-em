@@ -38,8 +38,9 @@ object Main {
       val h = hmm.withSequence(seq)
       val a = h.alpha()
       val b = h.beta()
-      println(h.gamma(a, b).toString(10, 100))
-//      h.xi(a,b).foreach(m => println(m.toString(10, 100)))
+      val xi = h.xi(a, b)
+//      println(h.xi(a, b).toString(10, 100))
+      println(h.gamma(a, xi).toString(10, 100))
       println("====================================")
     })
 

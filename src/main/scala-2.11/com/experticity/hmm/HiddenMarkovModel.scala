@@ -83,32 +83,36 @@ case class HiddenMarkovModel(meta: HMMMeta, initial: DenseVector[Double], transi
     beta
   }
 
-  def gamma(alpha: DenseMatrix[Double], beta: DenseMatrix[Double]) = {
-    val gamma = DenseMatrix.zeros[Double](meta.numStates, sequence.size)
-
-    forT(t => {
-      forN(i => {
-        gamma(i, t) = (alpha(i,t) * beta(i,t)) / sumN(j => alpha(j,t) * beta(j,t))
-//        gamma(i, t) = (alpha(i,t) * beta(i,t)) / sumN(j => alpha(j,t) * beta(j,t))
-      })
-    })
-
-    gamma
-  }
-
   def xi(alpha: DenseMatrix[Double], beta: DenseMatrix[Double]) = {
-    val xi = (0 until meta.numStates).map(_ => DenseMatrix.zeros[Double](meta.numStates, sequence.size - 1)).toList
+    val xi = DenseMatrix.zeros[Double](meta.numStates * 2, sequence.size - 1)
 
-    val sum = sumN(k => alpha(k, meta.numStates - 1))
+    val sum = sumN(k => alpha(k, sequence.size - 1))
     `forT-1`(t => {
       forN(i => {
         forN(j => {
-          xi(i)(j,t) = (alpha(i,t) * a(i,j) * beta(j,t+1) * b(j, y(t+1))) / sum
+          xi(i*2 + j, t) = (alpha(i,t) * a(i,j) * beta(j,t+1) * b(j, y(t+1))) / sum
         })
       })
     })
 
     xi
+  }
+
+  def gamma(alpha: DenseMatrix[Double], xi: DenseMatrix[Double]) = {
+    val gamma = DenseMatrix.zeros[Double](meta.numStates, sequence.size)
+
+    `forT-1`(t => {
+      forN(i => {
+        gamma(i, t) = sumN(j => xi(i*2 + j, t))
+        //        gamma(i, t) = (alpha(i,t) * beta(i,t)) / sumN(j => alpha(j,t) * beta(j,t))
+      })
+    })
+    val sum = sumN(k => alpha(k, sequence.size - 1))
+    forN(i => {
+      gamma(i, sequence.size - 1) = alpha(i, sequence.size - 1) / sum
+    })
+
+    gamma
   }
 
   def normalize(a: DenseMatrix[Double]) = {
@@ -140,13 +144,13 @@ case class HiddenMarkovModel(meta: HMMMeta, initial: DenseVector[Double], transi
     copy(initial = newPi, transitions = normalize(newA), emissions = newB)
   }
 
-  def emStep() = {
-    val _a = alpha()
-    val _b = beta()
-    val _g = gamma(_a, _b)
-    val _x = xi(_a, _b)
-    update(_g, _x)
-  }
+//  def emStep() = {
+//    val _a = alpha()
+//    val _b = beta()
+//    val _g = gamma(_a, _b)
+//    val _x = xi(_a, _b)
+//    update(_g, _x)
+//  }
 
   override def toString: String =
     s"""
