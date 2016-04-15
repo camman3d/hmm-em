@@ -1,4 +1,4 @@
-name := "hmm-solver"
+name := "hmm-em"
 
 version := "1.0"
 
