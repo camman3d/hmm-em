@@ -27,22 +27,30 @@ object Main {
 
 
     // Create the HMM we'll train
-    val hmm = HiddenMarkovModel(2, 2).copy(
+    var hmm = HiddenMarkovModel(2, 2).copy(
       initial = DenseVector(.85, .15),
       transitions = DenseMatrix((.3, .7), (.1, .9)),
       emissions = DenseMatrix((.4, .6), (.5, .5))
     )
+    println(hmm)
 
-    val obs = List(List(0,1,1,0), List(1,0,1))
-    obs.foreach(seq => {
+    val obs = List(List(0,1,1,0), List(0,1,1,0), List(0,1,1,0), List(0,1,1,0), List(0,1,1,0), List(0,1,1,0), List(0,1,1,0), List(0,1,1,0), List(0,1,1,0), List(0,1,1,0),
+      List(1,0,1), List(1,0,1), List(1,0,1), List(1,0,1), List(1,0,1), List(1,0,1), List(1,0,1), List(1,0,1), List(1,0,1), List(1,0,1),
+      List(1,0,1), List(1,0,1), List(1,0,1), List(1,0,1), List(1,0,1), List(1,0,1), List(1,0,1), List(1,0,1), List(1,0,1), List(1,0,1))
+    val foo = obs.map(seq => {
       val h = hmm.withSequence(seq)
       val a = h.alpha()
       val b = h.beta()
       val xi = h.xi(a, b)
-//      println(h.xi(a, b).toString(10, 100))
-      println(h.gamma(a, xi).toString(10, 100))
-      println("====================================")
+      val gamma = h.gamma(a, xi)
+
+      (xi, gamma)
     })
+    val xis = foo.map(_._1)
+    val gammas = foo.map(_._2)
+    hmm = hmm.update(xis, gammas, obs)
+    println(hmm)
+
 
 
 

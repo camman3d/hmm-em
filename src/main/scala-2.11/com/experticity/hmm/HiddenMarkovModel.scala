@@ -52,6 +52,7 @@ case class HiddenMarkovModel(meta: HMMMeta, initial: DenseVector[Double], transi
   def `sumT-1`(f: Int => Double) = (0 until sequence.size-1).map(f).sum
   def fromT(f: Int => Unit) = sequence.indices.reverse.foreach(f)
   def forN(f: Int => Unit) = (0 until meta.numStates).foreach(f)
+  def for2N(f: Int => Unit) = (0 until meta.numStates*2).foreach(f)
   def sumN(f: Int => Double) = (0 until meta.numStates).map(f).sum
   def forM(f: Int => Unit) = (0 until meta.numObservations).foreach(f)
 
@@ -115,33 +116,54 @@ case class HiddenMarkovModel(meta: HMMMeta, initial: DenseVector[Double], transi
     gamma
   }
 
-  def normalize(a: DenseMatrix[Double]) = {
-    val normalized = a.copy
-    forN(i => {
-      val sum = sumN(j => a(i,j))
-      forN(j => normalized(i,j) = a(i,j) / sum)
-    })
-    normalized
-  }
+  def update(xis: List[DenseMatrix[Double]], gammas: List[DenseMatrix[Double]], sequences: List[List[Int]]) = {
+    // The new start is the average
+    val newPi = {
+      val pi = gammas.map(m => m(::, 0)).reduce((m1, m2) => m1 + m2)
+      pi / pi.sum
+    }
 
-  def update(gamma: DenseMatrix[Double], xi: List[DenseMatrix[Double]]) = {
-    val newPi = gamma(::, 0)
+    val newA = {
+      val v = xis.map(m => {
+        val v = DenseVector.zeros[Double](meta.numStates*2)
+        for2N(i => v(i) = m(i,::).t.sum)
+        v
+      }).reduce((m1,m2) => m1 + m2)
 
-    val newA = DenseMatrix.zeros[Double](meta.numStates, meta.numStates)
-    forN(i => {
-      forN(j => {
-        newA(i,j) = `sumT-1`(t => xi(i)(j,t)) / `sumT-1`(t => gamma(i,t))
+      val a = DenseMatrix.zeros[Double](meta.numStates, meta.numStates)
+      forN(i => {
+        forN(j => {
+          a(i,j) = v(2*i + j) / sumN(k => v(2*i + k))
+        })
       })
-    })
+      a
+    }
 
-    val newB = DenseMatrix.zeros[Double](meta.numStates, meta.numObservations)
-    forN(i => {
-      forM(v => {
-        newB(i, v) = sumT(t => if (v == y(t)) gamma(i, t) else 0) / sumT(t => gamma(i, t))
+    val newB = {
+      val b = gammas.zip(sequences).map(g => {
+        val (m, seq) = g
+        val b = DenseMatrix.zeros[Double](meta.numStates, meta.numObservations)
+        forN(i => {
+          forM(j => {
+            b(i,j) = m(i,::).t.toScalaVector() // gamma row
+              .zip(seq)
+              .filter(d => d._2 == j)
+              .map(_._1).sum
+          })
+        })
+        b
+      }).reduce((m1,m2) => m1 + m2)
+
+      forN(i => {
+        val sum = b(i,::).t.sum
+        forM(j => {
+          b(i,j) /= sum
+        })
       })
-    })
+      b
+    }
 
-    copy(initial = newPi, transitions = normalize(newA), emissions = newB)
+    copy(initial = newPi, transitions = newA, emissions = newB)
   }
 
 //  def emStep() = {
