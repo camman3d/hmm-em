@@ -3,11 +3,7 @@ package com.joshmonson
 object Main {
   def main(args: Array[String]) {
 
-    val numSequences = 100
-    val sequenceSize = 50
-    val numIterations = 5
     val errThreshold = 0.1 // We stop when the log likelihood increases by less than this
-
     val data = DataGenerator.generate(Map(
       List(0,0,1)       -> 10,  //  TTS	    10
       List(0,0,1,1)     -> 15,  //  TTSS	  15
