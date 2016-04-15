@@ -1,4 +1,4 @@
-package com.experticity.hmm
+package com.joshmonson
 
 import breeze.linalg.{DenseMatrix, DenseVector}
 
@@ -31,7 +31,6 @@ case class HiddenMarkovModel(meta: HMMMeta, initial: DenseVector[Double], transi
       next(emissions(state,::).t)
     })
 
-//    (observations.toList, states.toList)
     observations.toList
   }
 
@@ -119,16 +118,6 @@ case class HiddenMarkovModel(meta: HMMMeta, initial: DenseVector[Double], transi
     gamma
   }
 
-
-
-//  def emStep() = {
-//    val _a = alpha()
-//    val _b = beta()
-//    val _g = gamma(_a, _b)
-//    val _x = xi(_a, _b)
-//    update(_g, _x)
-//  }
-
   override def toString: String =
     s"""
       |Initial:
@@ -147,7 +136,7 @@ object HiddenMarkovModel {
   def apply(numStates: Int, numObservations: Int): HiddenMarkovModel =
     HiddenMarkovModel(HMMMeta(numStates, numObservations), DenseVector(), DenseMatrix.zeros[Double](1,1), DenseMatrix.zeros[Double](1,1))
 
-  case class EStepOutput(hmm: HiddenMarkovModel, sequences: List[List[Int]], xis: List[DenseMatrix[Double]], gammas: List[DenseMatrix[Double]])
+  case class EStepOutput(hmm: HiddenMarkovModel, sequences: List[List[Int]], xis: List[DenseMatrix[Double]], gammas: List[DenseMatrix[Double]], logLikelihood: Double)
 
   def eStep(hmm: HiddenMarkovModel, sequences: List[List[Int]]) = {
     val data = sequences.map(seq => {
@@ -156,9 +145,10 @@ object HiddenMarkovModel {
       val b = h.beta()
       val xi = h.xi(a, b)
       val gamma = h.gamma(a, xi)
-      (xi, gamma)
+      val ll = math.log(a(::,seq.size - 1).sum)
+      (xi, gamma, ll)
     })
-    EStepOutput(hmm, sequences, data.map(_._1), data.map(_._2))
+    EStepOutput(hmm, sequences, data.map(_._1), data.map(_._2), data.map(_._3).sum)
   }
 
   def mStep(eout: EStepOutput) = {
@@ -211,7 +201,7 @@ object HiddenMarkovModel {
       b
     }
 
-    hmm.copy(initial = newPi, transitions = newA, emissions = newB)
+    (hmm.copy(initial = newPi, transitions = newA, emissions = newB), eout.logLikelihood)
   }
 
 }
