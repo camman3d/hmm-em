@@ -7,16 +7,18 @@ object EMSolver {
 
     // E = Edugame, S = Store, C = Social
     val data = DataGenerator.generate(Map(
-      List(0,0,1)       -> 10,  //  EES	    10
-      List(0,0,1,1)     -> 15,  //  EESS	  15
-      List(0,0,1,0,1,1) -> 20,  //  EESESS  20
-      List(0,1,1)       -> 15,  //  ESS	    15
-      List(0,0,1,2)     -> 13,  //  EESC	  13
-      List(0,0,1,1,2)   -> 20,  //  EESSC	  20
-      List(0,0,1,1,1,2) -> 10,  //  EESSSC	10
-      List(0,1,1,0,2)   -> 5,   //  ESSEC	  5
-      List(1,0,0,1)     -> 8,   //  SEES	  8
-      List(1,0,0,1,2)   -> 8    //  SEESC	  8
+      List(0,0,1)         -> 10,  //  EES	    10
+      List(0,0,1,1)       -> 15,  //  EESS	  15
+      List(0,0,1,0,1,1)   -> 20,  //  EESESS  20
+      List(0,0,1,0,1,1,2) -> 18,  //  EESESSC 18
+      List(0,1,1)         -> 15,  //  ESS	    15
+      List(0,1,1,0)       -> 15,  //  ESSC    15
+      List(0,0,1,2)       -> 13,  //  EESC	  13
+      List(0,0,1,1,2)     -> 20,  //  EESSC	  20
+      List(0,0,1,1,1,2)   -> 10,  //  EESSSC	10
+      List(0,1,1,0,2)     -> 5,   //  ESSEC	  5
+      List(1,0,0,1)       -> 8,   //  SEES	  8
+      List(1,0,0,1,2)     -> 8    //  SEESC	  8
     ))
 
 
