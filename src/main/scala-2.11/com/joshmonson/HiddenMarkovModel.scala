@@ -107,7 +107,6 @@ case class HiddenMarkovModel(meta: HMMMeta, initial: DenseVector[Double], transi
     `forT-1`(t => {
       forN(i => {
         gamma(i, t) = sumN(j => xi(i*2 + j, t))
-        //        gamma(i, t) = (alpha(i,t) * beta(i,t)) / sumN(j => alpha(j,t) * beta(j,t))
       })
     })
     val sum = sumN(k => alpha(k, sequence.size - 1))
